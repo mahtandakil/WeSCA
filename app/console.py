@@ -61,13 +61,14 @@ class Console():
 
 	def showWebProfiles(self, profiles, server_ids):
 
-		sizes = [0,0,0]
-		header = ["Profile", "Path", "Server"]
+		sizes = [0,0,0,0]
+		header = ["Profile", "Path", "Server", "Webmaps"]
 		limiter = ""
 		
 		sizes[0] = len(header[0])
 		sizes[1] = len(header[1])
 		sizes[2] = len(header[2])
+		sizes[3] = len(header[3])
 		
 		for p in profiles:
 			
@@ -80,17 +81,23 @@ class Console():
 			if len(server_ids[p[3]]) > sizes[2]:
 				sizes[2] = len(server_ids[p[3]])
 
-		limiter = "+--" + "-"*sizes[0] + "+--" + "-"*sizes[1] + "+--" + "-"*sizes[2] + "+"
+			if len(str(p[4])) > sizes[3]:
+				sizes[3] = len(str(p[4]))
+
+
+		limiter = "+--" + "-"*sizes[0] + "+--" + "-"*sizes[1] + "+--" + "-"*sizes[2] + "+--" + "-"*sizes[3] + "+"
 		
 		print limiter
 		print "|", self.adjustString(header[0], "left", sizes[0]),
 		print "|", self.adjustString(header[1], "left", sizes[1]),
-		print "|", self.adjustString(header[2], "left", sizes[2]) + " |"
+		print "|", self.adjustString(header[2], "left", sizes[2]),
+		print "|", self.adjustString(header[3], "left", sizes[3]) + " |"
 		print limiter
 		for p in profiles:
 			print "|", self.adjustString(p[1], "left", sizes[0]),
 			print "|", self.adjustString(p[2], "left", sizes[1]),
-			print "|", self.adjustString(server_ids[p[3]], "left", sizes[2]) + " |"
+			print "|", self.adjustString(server_ids[p[3]], "left", sizes[2]),
+			print "|", self.adjustString(p[4], "left", sizes[3]) + " |"
 
 		print limiter
 
@@ -180,5 +187,12 @@ class Console():
 		else:
 			return False
 
+
+#---------------------------------------------------------------------------
+
+	def message(self, message):
+		
+		print message
+		
 
 #---------------------------------------------------------------------------

@@ -60,19 +60,25 @@ class Core:
 		if(inputs['commands'].count('compare-webmaps') > 0):
 			self.compareWebmaps()
 
+		if(inputs['commands'].count('delete-webmap') > 0):
+			self.deleteWebmap()
+
+		if(inputs['commands'].count('delete-web-profile') > 0):
+			self.deleteWebProfile()
+
 
 #-----------------------------------------------------------------------
 
 	def printHelp(self):
 
 		print """
-WeSCA 0.2
+WeSCA 0.3
 		
 COMMANDS:
 		
 --compare-webmaps
     Compares two different webmaps
-    Requieres: -webmap1, -webmap2, -of
+    Requieres: -id1, -id2, -of
 
 --create-server-profile
     Creates a new profile for an specific web server
@@ -81,6 +87,14 @@ COMMANDS:
 --create-web-profile
     Creates a new profile for an specific web site in a server
     Requieres: -path, -profile-web-name, -profile-server-name
+
+--delete-webmap
+    Deletes a previously stored webmap
+    Requieres: -id
+
+--delete-web-profile
+    Deletes a web profile and its linked webmaps
+    Requieres: -profile-web-name
 
 --help
     Shows this view
@@ -104,6 +118,57 @@ COMMANDS:
 
 #-----------------------------------------------------------------------
 
+	def deleteWebProfile(self):
+		
+		error = False
+		
+		try:
+			web_name = self.inputs["args"]["profile-web-name"]
+
+		except KeyError:
+			error = True
+			print "ERROR retrieving information, missed value"
+
+		if not error:	
+			
+			web_id = self.sql.getWebProfileByName(web_name)[0]
+			webmaps = self.sql.getWebMapLauchByWebProfileId(web_id)
+			
+			for wm in webmaps:
+				self.sql.deleteWebMapDataByWebmap_id(wm[0])
+				self.sql.deleteWebMapLauchById(wm[0])
+			
+			self.sql.deleteWebProfileById(web_id)
+			
+			self.sql.commit()
+			
+			self.interface.message("Web profile deleted")
+			
+			
+#-----------------------------------------------------------------------
+
+	def deleteWebmap(self):
+		
+		error = False
+		
+		try:
+			ident = self.inputs["args"]["id"]
+
+		except KeyError:
+			error = True
+			print "ERROR retrieving information, missed value"
+
+		if not error:	
+			
+			self.sql.deleteWebMapDataByWebmap_id(ident)
+			self.sql.deleteWebMapLauchById(ident)
+			self.sql.commit()
+			
+			self.interface.message("Webmap deleted")
+	
+	
+#-----------------------------------------------------------------------
+
 	def compareWebmaps(self):
 
 		error = False
@@ -112,8 +177,8 @@ COMMANDS:
 		versions = None
 		
 		try:
-			id1 = self.inputs["args"]["webmap1"]
-			id2 = self.inputs["args"]["webmap2"]
+			id1 = self.inputs["args"]["id1"]
+			id2 = self.inputs["args"]["id2"]
 			path = self.inputs["args"]["of"]
 
 		except KeyError:
@@ -290,7 +355,7 @@ COMMANDS:
 		try:
 			path = self.inputs["args"]["path"]
 			name = self.inputs["args"]["profile-web-name"]
-			server_profile = self.inputs["args"]["profile-server-name"]
+			server_name = self.inputs["args"]["profile-server-name"]
 			
 			protocol = "FTP"
 
@@ -299,8 +364,11 @@ COMMANDS:
 			print "ERROR creating web profile, missed value"
 
 		if not error:
-			self.sql.insertIntoWebProfile(name, path, server_profile)
-
+			server_id = self.sql.getServerProfileByName(server_name)[0]
+			self.sql.insertIntoWebProfile(name, path, server_id)
+			self.sql.commit()
+			print "Profile created"
+			
 
 #-----------------------------------------------------------------------
 
@@ -523,12 +591,15 @@ COMMANDS:
 		
 		profiles = self.sql.getWebProfile()
 		server_ids = {}
+		webs = []
 		
 		for p in profiles:
-			p = self.sql.getServerProfileById(p[3])
-			server_ids[p[0]] = p[1]
-		
-		self.interface.showWebProfiles(profiles, server_ids)
+			s = self.sql.getServerProfileById(p[3])
+			server_ids[s[0]] = s[1]
+			webmaps = self.sql.countWebMapLaunchByWebProfileId(p[0])
+			webs.append([p[0], p[1], p[2], p[3], webmaps])
+
+		self.interface.showWebProfiles(webs, server_ids)
 		
 		
 #-----------------------------------------------------------------------

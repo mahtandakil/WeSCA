@@ -66,6 +66,36 @@ class SQLConn():
 
 #---------------------------------------------------------------------------
 
+	def deleteWebMapDataByWebmap_id(self, ident):
+
+		command = "DELETE FROM 'WebMapData' WHERE webmap_id=" + str(ident) + ""
+
+		self.connect()
+		self.cursor.execute(command)
+
+
+#---------------------------------------------------------------------------
+
+	def deleteWebProfileById(self, ident):
+
+		command = "DELETE FROM 'WebProfile' WHERE id=" + str(ident) + ""
+
+		self.connect()
+		self.cursor.execute(command)
+
+
+#---------------------------------------------------------------------------
+
+	def deleteWebMapLauchById(self, ident):
+
+		command = "DELETE FROM 'WebMapLaunch' WHERE id=" + str(ident) + ""
+
+		self.connect()
+		self.cursor.execute(command)
+
+
+#---------------------------------------------------------------------------
+
 	def insertIntoServerProfile(self, name, server, port, protocol, user, password):
 
 		command = "INSERT INTO 'ServerProfile' VALUES (NULL,'" + name + "','" + server + "','" + port + "','" + protocol + "','" + user + "','" + password + "');"
@@ -77,18 +107,14 @@ class SQLConn():
 
 #---------------------------------------------------------------------------
 
-	def insertIntoWebProfile(self, name, path, server_profile):
+	def insertIntoWebProfile(self, name, path, server_id):
 
 		self.connect()
-
-		server_data = self.getServerProfileByServerName(server_profile)
-		server_id = server_data[0]
 		
 		command = "INSERT INTO 'WebProfile' VALUES (NULL,'" + name + "','" + path + "'," + str(server_id) + ");"
 
 		self.connect()
 		self.cursor.execute(command)
-		self.commit()
 			
 
 #---------------------------------------------------------------------------
@@ -112,6 +138,19 @@ class SQLConn():
 		self.connect()
 		self.cursor.execute(command)
 		result = self.cursor.fetchone()
+		
+		return result
+		
+
+#---------------------------------------------------------------------------
+
+	def countWebMapLaunchByWebProfileId(self, ident):
+	
+		command = "SELECT COUNT (*) FROM WebMapLaunch WHERE WebProfileId=" + str(ident) + ";"
+		
+		self.connect()
+		self.cursor.execute(command)
+		result = self.cursor.fetchone()[0]
 		
 		return result
 		
