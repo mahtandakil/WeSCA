@@ -8,6 +8,7 @@ from app import ftp
 
 
 import time
+import os.path
 
 
 #-----------------------------------------------------------------------
@@ -44,6 +45,9 @@ class Core:
 		if(inputs['commands'].count('show-web-profiles') > 0):
 			self.showWebProfiles()
 
+		if(inputs['commands'].count('show-webmaps') > 0):
+			self.showPreviousWebmaps()
+
 		if(inputs['commands'].count('create-server-profile') > 0):
 			self.createServerProfile()
 
@@ -53,38 +57,206 @@ class Core:
 		if(inputs['commands'].count('webmap') > 0):
 			self.webmap()
 
+		if(inputs['commands'].count('compare-webmaps') > 0):
+			self.compareWebmaps()
+
 
 #-----------------------------------------------------------------------
 
 	def printHelp(self):
 
 		print """
-WeSCA 0.1
+WeSCA 0.2
 		
 COMMANDS:
 		
+--compare-webmaps
+    Compares two different webmaps
+    Requieres: -webmap1, -webmap2, -of
+
 --create-server-profile
     Creates a new profile for an specific web server
     Requieres: -server, -port, -user, -password, -profile-server-name
 
 --create-web-profile
-		Creates a new profile for an specific web site in a server
-    Requieres: -path, -profile-web-name, -profile-web-name
+    Creates a new profile for an specific web site in a server
+    Requieres: -path, -profile-web-name, -profile-server-name
 
 --help
     Shows this view
-    
+
 --show-server-profiles
     Shows a list with all the stored server profiles
 
 --show-web-profiles
     Shows a list with all the stored web profiles
 
+--show-webmaps
+    Shows a list with all the webmaps stored from previous checks
+    Requieres: -profile-web-name
+    
 --webmap
     Looks for modifications
     Requieres: -type[online|changes|backup], -profile-web-name
 
 """
+
+
+#-----------------------------------------------------------------------
+
+	def compareWebmaps(self):
+
+		error = False
+		new = None
+		lost = None
+		versions = None
+		
+		try:
+			id1 = self.inputs["args"]["webmap1"]
+			id2 = self.inputs["args"]["webmap2"]
+			path = self.inputs["args"]["of"]
+
+		except KeyError:
+			error = True
+			print "ERROR retrieving information, missed value"
+			
+		if not error:
+			
+			webmap1 = self.loadNormalizedWebMap(id1)
+			webmap2 = self.loadNormalizedWebMap(id2)
+
+			print
+			print "Webmap 1:", len(webmap1)
+			print "Webmap 2:", len(webmap2)
+
+			new = self.searchNewElements(webmap1, webmap2)
+			print "New items:", len(new)
+			lost = self.searchLostElements(webmap1, webmap2)
+			print "Lost items:", len(lost)
+			versions = self.compareVersions(webmap1, webmap2)
+			print "Modified items:", len(versions)
+
+			self.exportWebMapComparison(path, new, lost, versions)
+			
+
+#-----------------------------------------------------------------------
+
+	def exportWebMapComparison(self, path, new, lost, versions):
+		
+		new_list = []
+		lost_list = []
+		versions_list = []
+		
+		for n in new:
+			new_list.append(n)
+		for l in lost:
+			lost_list.append(l)
+		for v in versions:
+			versions_list.append(v)
+		new_list.sort()
+		lost_list.sort()
+		versions_list.sort()
+		
+		f = open(path, "w")
+		
+		f.write("New files: " + str(len(new)) + "\n")
+		for nl in new_list:
+			f.write(nl["file"] + "\n")
+		f.write("\n")
+
+		f.write("Lost files: " + str(len(lost)) + "\n")
+		for ll in lost_list:
+			f.write(ll["file"] + "\n")
+		f.write("\n")
+
+		f.write("Modified files: " + str(len(versions)) + "\n")
+		for vl in versions_list:
+			output = vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]] + " <> " + vl["data2"][vl["mismatch"]] + " )" + "\n"
+			f.write(output)
+		
+		f.close()
+
+
+#-----------------------------------------------------------------------
+
+	def compareVersions(self, webmap1, webmap2):
+		
+		versions = []
+		
+		for wm1 in webmap1:
+			
+			if webmap2.has_key(wm1):
+				data1 = webmap1[wm1]
+				data2 = webmap2[wm1]
+				
+				changed = False
+				
+				if not data1["file"] == data2["file"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"file"})
+				if not data1["etype"] == data2["etype"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"etype"})
+				if not data1["user"] == data2["user"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"user"})
+				if not data1["group"] == data2["group"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"group"})
+				if not data1["size"] == data2["size"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"size"})
+				if not data1["date"] == data2["date"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"date"})
+				if not data1["permissions"] == data2["permissions"]:
+					versions.append({"data1":webmap1[wm1], "data2":webmap2[wm1], "mismatch":"permissions"})
+				
+		return versions
+
+
+#-----------------------------------------------------------------------
+
+	def searchLostElements(self, webmap1, webmap2):
+
+		lost = []
+		
+		for wm1 in webmap1:
+			
+			if not webmap2.has_key(wm1):
+				lost.append(webmap1[wm1])		
+		
+		return lost
+
+#-----------------------------------------------------------------------
+
+	def searchNewElements(self, webmap1, webmap2):
+		
+		new = []
+		
+		for wm2 in webmap2:
+			
+			if not webmap1.has_key(wm2):
+				new.append(webmap2[wm2])			
+			
+		return new
+
+
+#-----------------------------------------------------------------------
+
+	def showPreviousWebmaps(self):
+	
+		error = False
+		
+		try:
+			web_name = self.inputs["args"]["profile-web-name"]
+
+		except KeyError:
+			error = True
+			print "ERROR retrieving information, missed value"
+			
+		if not error:
+			web_data = self.sql.getWebProfileByName(web_name)
+			web_id = int(web_data[0])
+			data = self.sql.getWebMapLauchByWebProfileId(web_id)
+			
+			self.interface.showLaunchProfile(web_data[1], data)
+
+
 
 #-----------------------------------------------------------------------
 
@@ -203,16 +375,13 @@ COMMANDS:
 
 #-----------------------------------------------------------------------
 
-	def loadNormalizedWebMap(self, previous_launch_id): 
+	def loadNormalizedWebMap(self, webmap_id): 
 		
-		webmap = []
-		data = self.sql.getTempCheckDataPorLaunchId(previous_launch_id)
+		webmap = {}
+		data = self.sql.getWebMapDataByWebMapId(webmap_id)
 
 		for d in data:
-			webmap.append({"file":d[3]+"/"+d[2], "etype":d[1], "user":d[4], "group":d[5], "size":d[6], "date":d[7], "permissions":d[8]})
-			print d
-			print
-			print
+			webmap[d[4]] = {"file":d[4], "etype":d[3], "user":d[5], "group":d[6], "size":d[7], "date":d[8], "permissions":d[9]}
 
 		return webmap
 		

@@ -225,6 +225,32 @@ class SQLConn():
 
 #---------------------------------------------------------------------------
 
+	def getWebMapDataByWebMapId(self, webmap_id):
+	
+		command = "SELECT * FROM 'WebMapData' WHERE webmap_id=" + str(webmap_id) + ";"
+		
+		self.connect()
+		self.cursor.execute(command)
+		result = self.cursor.fetchall()
+		
+		return result
+		
+
+#---------------------------------------------------------------------------
+
+	def getWebMapLauchByWebProfileId(self, ident):
+	
+		command = "SELECT * FROM 'WebMapLaunch' WHERE WebProfileId=" + str(ident) + ";"
+		
+		self.connect()
+		self.cursor.execute(command)
+		result = self.cursor.fetchall()
+		
+		return result
+		
+
+#---------------------------------------------------------------------------
+
 	def getTempCheckData(self):
 
 		command = "SELECT * FROM 'TempCheckData';"

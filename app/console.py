@@ -25,6 +25,40 @@ class Console():
 	
 #---------------------------------------------------------------------------
 
+	def showLaunchProfile(self, profile, data):
+		
+		sizes = [0,0]
+		header = ["IDs", "Date"]
+		limiter = ""		
+		
+		sizes[0] = len(header[0])
+		sizes[1] = len(header[1])
+
+		print profile
+		
+		for p in data:
+			
+			if len(str(p[0])) > sizes[0]:
+				sizes[0] = len(str(p[0]))
+
+			if len(p[1]) > sizes[1]:
+				sizes[1] = len(p[1])			
+
+		limiter = "+--" + "-"*sizes[0] + "+--" + "-"*sizes[1] + "+"
+
+		print limiter
+		print "|", self.adjustString(header[0], "left", sizes[0]),
+		print "|", self.adjustString(header[1], "left", sizes[1]) + " |"
+		print limiter
+		for p in data:
+			print "|", self.adjustString(p[0], "left", sizes[0]),
+			print "|", self.adjustString(p[1], "left", sizes[1]) + " |"
+
+		print limiter
+
+
+#---------------------------------------------------------------------------
+
 	def showWebProfiles(self, profiles, server_ids):
 
 		sizes = [0,0,0]
@@ -119,6 +153,7 @@ class Console():
 
 		print limiter
 
+
 #---------------------------------------------------------------------------
 
 	def adjustString(self, string, align, size):
@@ -131,6 +166,7 @@ class Console():
 
 		
 		return string
+
 
 #---------------------------------------------------------------------------
 
