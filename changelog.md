@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4
+- Improved the webmap compare file for the modified files
+
+
 ## 0.3
 - Fixed an error in the --create-web-profile command
 - The web profiles table now shows the number of stored webmaps

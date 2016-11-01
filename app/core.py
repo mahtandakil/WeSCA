@@ -233,11 +233,68 @@ COMMANDS:
 		for ll in lost_list:
 			f.write(ll["file"] + "\n")
 		f.write("\n")
-
-		f.write("Modified files: " + str(len(versions)) + "\n")
+		
+		f.write("Modified registers: " + str(len(versions)) + "\n")
+		
+		count = 0
 		for vl in versions_list:
-			output = vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]] + " <> " + vl["data2"][vl["mismatch"]] + " )" + "\n"
-			f.write(output)
+			if vl["mismatch"] == "user":
+				count+=1
+		if count > 0:
+			f.write("  - User: " + str(len(versions)) + "\n")
+			for vl in versions_list:
+				if vl["mismatch"] == "user":
+					output = "    " + vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]] + " <> " + vl["data2"][vl["mismatch"]] + " )" + "\n"
+					f.write(output)
+			f.write("\n")
+		
+		count = 0
+		for vl in versions_list:
+			if vl["mismatch"] == "group":
+				count+=1
+		if count > 0:
+			f.write("  - Group: " + str(len(versions)) + "\n")
+			for vl in versions_list:
+				if vl["mismatch"] == "group":
+					output = "    " + vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]] + " <> " + vl["data2"][vl["mismatch"]] + " )" + "\n"
+					f.write(output)
+			f.write("\n")
+
+		count = 0
+		for vl in versions_list:
+			if vl["mismatch"] == "size":
+				count+=1
+		if count > 0:
+			f.write("  - Size: " + str(len(versions)) + "\n")
+			for vl in versions_list:
+				if vl["mismatch"] == "size":
+					output = "    " + vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]] + " <> " + vl["data2"][vl["mismatch"]] + " )" + "\n"
+					f.write(output)
+			f.write("\n")
+		
+		count = 0
+		for vl in versions_list:
+			if vl["mismatch"] == "date":
+				count+=1
+		if count > 0:
+			f.write("  - Date: " + str(len(versions)) + "\n")
+			for vl in versions_list:
+				if vl["mismatch"] == "date":
+					output = "    " + vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]][5:] + " <> " + vl["data2"][vl["mismatch"]][5:] + " )" + "\n"
+					f.write(output)
+			f.write("\n")
+		
+		count = 0
+		for vl in versions_list:
+			if vl["mismatch"] == "permissions":
+				count+=1
+		if count > 0:
+			f.write("  - Permissions: " + str(len(versions)) + "\n")
+			for vl in versions_list:
+				if vl["mismatch"] == "permissions":
+					output = "    " + vl["data1"]["file"] + " (" + vl["mismatch"] + ": " + vl["data1"][vl["mismatch"]] + " <> " + vl["data2"][vl["mismatch"]] + " )" + "\n"
+					f.write(output)
+			f.write("\n")	
 		
 		f.close()
 
